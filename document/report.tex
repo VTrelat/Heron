@@ -1,0 +1,201 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+
+\title{Heron's method for $\sqrt{a}$:\\[2pt]
+       \large a machine-checked proof, transported to paper}
+\author{R\'eflexions seminar\\ \small IECL, AHP \& Loria --- Universit\'e de Lorraine}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We compute $\sqrt{a}$ by the Heron (Babylonian) iteration $x_{n+1}=(x_n+a/x_n)/2$ and
+prove that it converges, with an explicit geometric rate and, near the root,
+quadratically. The development is a machine-checked Lean~4 / Mathlib proof; this note is
+its human-readable rendering, illustrating how a formal argument transports to an ordinary
+mathematical text. Since the iteration uses only the field operations, the same recursion
+runs as an \emph{exact, certified} square-root calculator over $\Q$.
+\end{abstract}
+
+\section{Introduction}
+
+Fix a real number $a>0$. Heron's method improves a guess $x$ for $\sqrt{a}$ by averaging it
+with $a/x$: if $x$ overestimates $\sqrt{a}$ then $a/x$ underestimates it, and their mean is
+a better guess. We make this precise below, proving a geometric error bound
+(Theorem~\ref{thm:geom}), quadratic convergence near the root (Proposition~\ref{prop:quad}),
+and the limit itself (Theorem~\ref{thm:lim}).
+
+Every statement corresponds to a declaration in a Lean~4 development checked against
+Mathlib, whose name we give in parentheses. The point of the note is illustrative: the
+formal proof and the text below carry the \emph{same} content, and the passage from one to
+the other is essentially mechanical --- proof-assistant plumbing disappears, and the
+load-bearing identities become the displayed equations.
+
+\section{The iteration}
+
+\begin{definition}[Heron step and sequence; \texttt{step}, \texttt{heron}]
+For $x\neq 0$ set
+\[
+  S(x)\;=\;\frac{x+a/x}{2}.
+\]
+Given $x_0>0$, define $x_0,x_1,x_2,\dots$ by $x_{n+1}=S(x_n)$.
+\end{definition}
+
+\begin{remark}
+$S$ is \emph{computable}, over any field --- in particular over $\Q$, which we use in Section~\ref{sec:calc}.
+The proofs themselves take place over $\R$.
+\end{remark}
+
+\begin{lemma}[Rational form; \texttt{step\_eq}]\label{lem:ratform}
+For $x\neq 0$,\qquad $\displaystyle S(x)=\frac{x^2+a}{2x}.$
+\end{lemma}
+
+\begin{proof}
+Multiplying through by $x$, $\dfrac{x+a/x}{2}=\dfrac{x^2+a}{2x}$.
+\end{proof}
+
+\begin{lemma}[Positivity; \texttt{step\_pos}, \texttt{heron\_pos}]\label{lem:pos}
+If $x>0$ then $S(x)>0$; consequently $x_n>0$ for every $n$.
+\end{lemma}
+
+\begin{proof}
+If $x>0$ then $a/x>0$, so $S(x)=(x+a/x)/2>0$. Since $x_0>0$, induction gives $x_n>0$ for
+all $n$.
+\end{proof}
+
+\section{Convergence}
+
+\begin{lemma}[The step overshoots; \texttt{le\_sq\_step}]\label{lem:overshoot}
+For $x\neq 0$,\qquad $a\leq S(x)^2.$
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:ratform},
+\[
+  S(x)^2-a=\Big(\frac{x^2+a}{2x}\Big)^2-a=\Big(\frac{x^2-a}{2x}\Big)^2\;\geq\;0. \qedhere
+\]
+\end{proof}
+
+\begin{corollary}[Lower bound; \texttt{sqrt\_le\_step}, \texttt{sqrt\_le\_heron}]\label{cor:lower}
+If $x>0$ then $\sqrt{a}\leq S(x)$. In particular $\sqrt{a}\leq x_n$ for every $n\geq 1$.
+\end{corollary}
+
+\begin{proof}
+Both sides are nonnegative and $a\leq S(x)^2$ by Lemma~\ref{lem:overshoot}, so
+$\sqrt{a}\leq\sqrt{S(x)^2}=S(x)$. Taking $x=x_n$ gives $\sqrt{a}\leq x_{n+1}$, that is,
+$\sqrt{a}\leq x_n$ for $n\geq 1$.
+\end{proof}
+
+\begin{lemma}[Error identity; \texttt{step\_sub\_sqrt}]\label{lem:err}
+For $x>0$,\qquad $\displaystyle S(x)-\sqrt{a}=\frac{(x-\sqrt{a})^2}{2x}.$
+\end{lemma}
+
+\begin{proof}
+Using Lemma~\ref{lem:ratform} and $(\sqrt{a})^2=a$,
+\[
+  S(x)-\sqrt{a}=\frac{x^2+a-2\sqrt{a}\,x}{2x}
+              =\frac{x^2-2\sqrt{a}\,x+(\sqrt{a})^2}{2x}
+              =\frac{(x-\sqrt{a})^2}{2x}. \qedhere
+\]
+\end{proof}
+
+\begin{lemma}[Contraction; \texttt{step\_sub\_sqrt\_le}]\label{lem:contr}
+If $\sqrt{a}\leq x$, then $\displaystyle S(x)-\sqrt{a}\leq\frac{x-\sqrt{a}}{2}.$
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:err}, the gap between the two sides is
+\[
+  \frac{x-\sqrt{a}}{2}-\big(S(x)-\sqrt{a}\big)
+   =\frac{x-\sqrt{a}}{2}-\frac{(x-\sqrt{a})^2}{2x}
+   =\frac{\sqrt{a}\,(x-\sqrt{a})}{2x}\;\geq\;0,
+\]
+since $x>0$ and $x\geq\sqrt{a}\geq 0$.
+\end{proof}
+
+\begin{theorem}[Geometric convergence; \texttt{heron\_error\_le}]\label{thm:geom}
+For every $k\geq 0$,
+\[
+  x_{k+1}-\sqrt{a}\;\leq\;\Big(\tfrac12\Big)^k\,(x_1-\sqrt{a}).
+\]
+\end{theorem}
+
+\begin{proof}
+We argue by induction on $k$, the case $k=0$ being an equality. For the inductive step,
+$x_{k+1}\geq\sqrt{a}$ by Corollary~\ref{cor:lower}, so the contraction
+(Lemma~\ref{lem:contr}) followed by the induction hypothesis gives
+\[
+  x_{k+2}-\sqrt{a}\;\leq\;\frac{x_{k+1}-\sqrt{a}}{2}
+   \;\leq\;\frac12\Big(\tfrac12\Big)^k(x_1-\sqrt{a})
+   \;=\;\Big(\tfrac12\Big)^{k+1}(x_1-\sqrt{a}). \qedhere
+\]
+\end{proof}
+
+\section{Sharper results}
+
+\begin{proposition}[Quadratic convergence; \texttt{step\_sub\_sqrt\_le\_sq}]\label{prop:quad}
+If $\sqrt{a}\leq x$, then $\displaystyle S(x)-\sqrt{a}\leq\frac{(x-\sqrt{a})^2}{2\sqrt{a}}.$
+\end{proposition}
+
+\begin{proof}
+By Lemma~\ref{lem:err}, $S(x)-\sqrt{a}=(x-\sqrt{a})^2/(2x)$. Since $0<\sqrt{a}\leq x$ we
+have $2\sqrt{a}\leq 2x$, hence enlarging the denominator gives
+$(x-\sqrt{a})^2/(2x)\leq(x-\sqrt{a})^2/(2\sqrt{a})$.
+\end{proof}
+
+\begin{remark}
+This is the source of the method's speed: once $x_n$ is close to $\sqrt{a}$, the error is
+essentially squared at each step, so the number of correct digits roughly doubles per
+iteration.
+\end{remark}
+
+\begin{theorem}[Limit; \texttt{heron\_tendsto}]\label{thm:lim}
+$x_n\to\sqrt{a}$ as $n\to+\infty$.
+\end{theorem}
+
+\begin{proof}
+For $n\geq 1$, Corollary~\ref{cor:lower} and Theorem~\ref{thm:geom} give
+\[
+  0\;\leq\;x_{n+1}-\sqrt{a}\;\leq\;\Big(\tfrac12\Big)^n(x_1-\sqrt{a}),
+\]
+and the right-hand side tends to $0$; the claim follows by squeezing.
+\end{proof}
+
+\section{A certified calculator}\label{sec:calc}
+
+\begin{remark}[\texttt{sqrtApprox}, \texttt{le\_sq\_step\_rat}]
+Because $S$ uses only the field operations, the recursion runs verbatim over $\Q$, where it
+is exactly computable. The overshoot inequality $a\leq S(x)^2$ (Lemma~\ref{lem:overshoot})
+holds over $\Q$ as well, so from step~$1$ on, every computed iterate is a rational whose
+square exceeds $a$ --- a \emph{certified} upper bound for $\sqrt{a}$. Iterating until
+$\vert x^2-a\vert\leq\varepsilon$ then returns $\sqrt{a}$ to any requested precision; for
+instance four steps from $x_0=1$ give
+\[
+  \sqrt{2}\;\approx\;\frac{665857}{470832}\;=\;1.4142135623\ldots,
+\]
+already correct to ten places. In this sense the formal proof yields a certified
+square-root calculator: the program that runs is exactly the function the theorems above
+describe.
+\end{remark}
+
+\end{document}
