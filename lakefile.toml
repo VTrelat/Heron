@@ -16,3 +16,7 @@ rev = "v4.31.0"
 
 [[lean_lib]]
 name = "Heron"
+
+[[lean_exe]]
+name = "heron"
+root = "Main"
