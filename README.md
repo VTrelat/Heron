@@ -9,6 +9,8 @@ lake build
 ```
 Then open `Heron/Heron.lean` in VS Code (with the Lean 4 extension).
 
+This repository provides an executable program `heron`, and a PDF document containing informal proofs; both are automatically released.
+
 ## Goal
 Define and prove that the Heron iteration
 
