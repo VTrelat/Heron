@@ -1,11 +1,11 @@
 name: Release
 
-# Build the `heron` executable (Linux + macOS) and the PDF report, then attach
-# all three to the GitHub release.
+# On a version tag (e.g. v1.0), in a single job on a single runner:
+#   (i)   compile the project and build the `heron` executable,
+#   (ii)  build the LaTeX report with latexmk,
+#   (iii) create the release and upload both assets.
 #
-# Trigger: push a tag like `v1.0`.  e.g.
 #     git tag v1.0 && git push origin v1.0
-# (softprops/action-gh-release creates the release for the tag if it does not exist yet.)
 
 on:
   push:
@@ -16,81 +16,45 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  heron-binary:
-    name: Build heron (${{ matrix.asset }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            asset: heron-linux-x86_64
-          - os: macos-latest
-            asset: heron-macos-arm64
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-
-      # Installs elan + the toolchain from `lean-toolchain`, fetches the Mathlib
-      # cache, and runs the default `lake build` (the library).
-      - name: Set up Lean and fetch Mathlib cache
-        uses: leanprover/lean-action@v1
-
-      # Compile the command-line program to a native binary.
-      - name: Build the executable
-        run: lake build heron
-
-      - name: Stage binary
-        run: |
-          mkdir -p dist
-          cp .lake/build/bin/heron "dist/${{ matrix.asset }}"
-
-      - name: Upload binary as a workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.asset }}
-          path: dist/${{ matrix.asset }}
-          if-no-files-found: error
-
-  pdf-report:
-    name: Build report.pdf
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Runs `latexmk` inside a TeX Live container; the .latexmkrc is honoured,
-      # so the PDF is produced at document/build/report.pdf.
-      - name: Compile the LaTeX report
+      # (i) Compile the project: lean-action installs elan + the toolchain, fetches the
+      #     Mathlib cache, and runs `lake build`; then we build the executable. Both share
+      #     the same .lake on this runner, so the project is compiled only once.
+      - name: Set up Lean and compile the project
+        uses: leanprover/lean-action@v1
+      - name: Build the heron executable
+        run: lake build heron
+
+      # (ii) Build the document with latexmk (honours document/.latexmkrc, which writes
+      #      the PDF to document/build/report.pdf).
+      - name: Build the PDF with latexmk
         uses: xu-cheng/latex-action@v3
         with:
           working_directory: document
           root_file: report.tex
 
-      - name: Upload PDF as a workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: report-pdf
-          path: document/build/report.pdf
-          if-no-files-found: error
+      - name: Collect the two assets
+        run: |
+          mkdir -p dist
+          cp .lake/build/bin/heron     dist/heron
+          cp document/build/report.pdf dist/report.pdf
 
-  publish:
-    name: Attach assets to the release
-    needs: [heron-binary, pdf-report]
-    # Only publish for real tag pushes (skip manual workflow_dispatch runs, which have no tag).
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: List collected assets
-        run: find artifacts -type f
-
+      # (iii) Create the release and upload both (skipped on manual dispatch — it has no tag).
       - name: Create release and upload assets
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: |
+            dist/heron
+            dist/report.pdf
           fail_on_unmatched_files: true
           generate_release_notes: true
