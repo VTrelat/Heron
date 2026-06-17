@@ -1,23 +1,29 @@
 name: Release
 
-# On a version tag (e.g. v1.0), in a single job on a single runner:
-#   (i)   compile the project and build the `heron` executable,
-#   (ii)  build the LaTeX report with latexmk,
-#   (iii) create the release and upload both assets.
+# Build and publish a release. Two ways to trigger:
+#   * push a tag:     git tag v1.0 && git push origin v1.0
+#   * "Run workflow"  (Actions tab -> Release -> Run workflow) and type the tag, e.g. v1.0
 #
-#     git tag v1.0 && git push origin v1.0
+# In one job on one runner it:
+#   (i)   compiles the project and builds the `heron` executable,
+#   (ii)  builds the LaTeX report with latexmk,
+#   (iii) creates the release and uploads both assets.
 
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to create for this release (e.g. v1.0)'
+        required: true
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event.inputs.tag || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -48,11 +54,12 @@ jobs:
           cp .lake/build/bin/heron     dist/heron
           cp document/build/report.pdf dist/report.pdf
 
-      # (iii) Create the release and upload both (skipped on manual dispatch — it has no tag).
+      # (iii) Create the release (for the pushed tag, or the tag typed for a manual run)
+      #       and upload both assets.
       - name: Create release and upload assets
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
             dist/heron
             dist/report.pdf
