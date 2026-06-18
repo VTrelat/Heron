@@ -46,9 +46,6 @@ Hints are deliberately sparse in the file. Nudges if you're stuck:
 - **Ex 8**: form the difference `(x−√a)/2 − (step−√a)` and show it equals `√a·(x−√a)/(2x) ≥ 0`.
 - **Ex 9**: induction, then `calc` chaining the contraction (ex 8) and the induction hypothesis.
 
-Tactics for the board: `unfold`, `field_simp`, `ring`, `nlinarith`/`positivity`, `linarith`,
-`calc`, `induction`, `gcongr`, `linear_combination`; search: `exact?`, `apply?`.
-
 ### Command-line executable
 `Main.lean` (at the repo root) is a small CLI: it runs Heron in **exact rational arithmetic**
 (the proved `Heron.step`) and prints each iterate, the result, the exact fraction, the squared
