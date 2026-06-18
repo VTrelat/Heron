@@ -21,7 +21,7 @@ $$ x_{n+1} = \frac{x_n + \frac{a}{x_n}}{2} $$
 ## The proved result
 - `heron_error_le` (main theorem): geometric convergence.
 - `step_sub_sqrt_le_sq`: **quadratic** convergence.
-- `heron_tendsto`: `Tendsto (heron a x₀) atTop (𝓝 (√a))` — the limit itself.
+- `heron_tendsto`: the limit itself.
 
 ## Structure of the exercises
 Each exercise depends only on the previous ones.
