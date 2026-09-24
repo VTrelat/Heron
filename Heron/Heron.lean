@@ -32,6 +32,7 @@ Mathlib lemmas about the square root (also search with `exact?`, `apply?`, or ma
 -/
 
 open Filter
+open scoped Topology
 
 namespace Heron
 
@@ -71,24 +72,24 @@ lemma le_sq_step {a x : ℝ} (hx : x ≠ 0) : a ≤ (step a x) ^ 2 := by
 
 /-- **Exercise 5.** Consequence: `√a ≤ step a x` whenever `x > 0`.
 Hint: `Real.sqrt_le_sqrt`, `Real.sqrt_sq`, and exercise 4. -/
-lemma sqrt_le_step {a x : ℝ} (ha : 0 < a) (hx : 0 < x) : Real.sqrt a ≤ step a x := by
+lemma sqrt_le_step {a x : ℝ} (ha : 0 < a) (hx : 0 < x) : √a ≤ step a x := by
   sorry
 
 /-- **Exercise 6.** From index 1 on, every iterate is at least `√a`. -/
 lemma sqrt_le_heron {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
-    ∀ n, Real.sqrt a ≤ heron a x₀ (n + 1) := by
+    ∀ n, √a ≤ heron a x₀ (n + 1) := by
   sorry
 
 /-- **Exercise 7 (error identity).** `step a x − √a = (x − √a)² / (2x)`.
 Idea: everything follows from `(√a)² = a` (`Real.sq_sqrt`). -/
 lemma step_sub_sqrt {a x : ℝ} (ha : 0 < a) (hx : 0 < x) :
-    step a x - Real.sqrt a = (x - Real.sqrt a) ^ 2 / (2 * x) := by
+    step a x - √a = (x - √a) ^ 2 / (2 * x) := by
   sorry
 
 /-- **Exercise 8 (contraction).** If `√a ≤ x`, the error is at least halved.
 Idea: `(x−√a)/2 − (step a x − √a) = √a·(x−√a)/(2x) ≥ 0`. -/
-lemma step_sub_sqrt_le {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : Real.sqrt a ≤ x) :
-    step a x - Real.sqrt a ≤ (x - Real.sqrt a) / 2 := by
+lemma step_sub_sqrt_le {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : √a ≤ x) :
+    step a x - √a ≤ (x - √a) / 2 := by
   sorry
 
 /-- **Main theorem (Exercise 9) — geometric rate.**
@@ -96,7 +97,7 @@ For every `k`, the error at index `k+1` is `≤ (1/2)^k` times the error at inde
 The sequence therefore converges (at least) geometrically. Idea: induction on `k`,
 combining the contraction (exercise 8) with the induction hypothesis. -/
 theorem heron_error_le {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
-    ∀ k, heron a x₀ (k + 1) - Real.sqrt a ≤ (1 / 2) ^ k * (heron a x₀ 1 - Real.sqrt a) := by
+    ∀ k, heron a x₀ (k + 1) - √a ≤ (1 / 2) ^ k * (heron a x₀ 1 - √a) := by
   sorry
 
 /-! ## Part B — An executable program
@@ -137,16 +138,16 @@ lemma le_sq_step_rat {a x : ℚ} (hx : x ≠ 0) : a ≤ (step a x) ^ 2 := by
 /-- **Bonus 1 — quadratic convergence.** The error is in fact `≤ (x − √a)² / (2√a)`:
 it is *squared* at each step (hence the ultra-fast convergence observed).
 Idea: start from the error identity (exercise 7), then `gcongr` (smaller denominator). -/
-lemma step_sub_sqrt_le_sq {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : Real.sqrt a ≤ x) :
-    step a x - Real.sqrt a ≤ (x - Real.sqrt a) ^ 2 / (2 * Real.sqrt a) := by
+lemma step_sub_sqrt_le_sq {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : √a ≤ x) :
+    step a x - √a ≤ (x - √a) ^ 2 / (2 * √a) := by
   sorry
 
 /-- **Bonus 2 — the limit.** The sequence converges to `√a` in the `Tendsto` sense.
 Idea: bound the error `0 ≤ xₙ₊₁ − √a ≤ (1/2)^n · C` and send it to 0
-(`squeeze_zero`, `tendsto_pow_atTop_nhds_zero_of_lt_one`), then shift the index
+(`squeeze_zero`, `tendsto_pow_atTop_𝓝_zero_of_lt_one`), then shift the index
 (`tendsto_add_atTop_iff_nat`). -/
 theorem heron_tendsto {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
-    Tendsto (heron a x₀) atTop (nhds (Real.sqrt a)) := by
+    Tendsto (heron a x₀) atTop (𝓝 √a) := by
   sorry
 
 end Heron
