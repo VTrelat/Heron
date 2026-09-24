@@ -62,8 +62,7 @@ lemma heron_pos {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) : ∀ n, 0 < hero
 lemma le_sq_step {a x : ℝ} (hx : x ≠ 0) : a ≤ (step a x) ^ 2 := by
   have key : (step a x) ^ 2 - a = ((x ^ 2 - a) / (2 * x)) ^ 2 := by
     rw [step_eq hx]
-    field_simp
-    ring
+    grind
   nlinarith [sq_nonneg ((x ^ 2 - a) / (2 * x)), key]
 
 /-- Consequence: `√a ≤ step a x` whenever `x > 0`. -/
@@ -76,7 +75,7 @@ lemma sqrt_le_step {a x : ℝ} (ha : 0 < a) (hx : 0 < x) : √a ≤ step a x := 
 lemma sqrt_le_heron {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
     ∀ n, √a ≤ heron a x₀ (n + 1) := by
   intro n
-  simpa using sqrt_le_step ha (heron_pos ha hx₀ n)
+  exact sqrt_le_step ha (heron_pos ha hx₀ n)
 
 /-- Exact **error identity**: `step a x − √a = (x − √a)² / (2x)`. -/
 lemma step_sub_sqrt {a x : ℝ} (ha : 0 < a) (hx : 0 < x) :
@@ -84,8 +83,7 @@ lemma step_sub_sqrt {a x : ℝ} (ha : 0 < a) (hx : 0 < x) :
   have hx' : x ≠ 0 := ne_of_gt hx
   have hs : √a ^ 2 = a := Real.sq_sqrt ha.le
   rw [step_eq hx']
-  field_simp
-  linear_combination -hs
+  grind
 
 /-- **Contraction**: if `√a ≤ x`, the error is at least halved. -/
 lemma step_sub_sqrt_le {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : √a ≤ x) :
@@ -109,8 +107,8 @@ theorem heron_error_le {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
     have h1 : √a ≤ heron a x₀ (k + 1) := sqrt_le_heron ha hx₀ k
     have hpos : 0 < heron a x₀ (k + 1) := heron_pos ha hx₀ (k + 1)
     have hstep : heron a x₀ (k + 1 + 1) - √a
-        ≤ (heron a x₀ (k + 1) - √a) / 2 := by
-      simpa using step_sub_sqrt_le ha hpos h1
+        ≤ (heron a x₀ (k + 1) - √a) / 2 :=
+          step_sub_sqrt_le ha hpos h1
     calc heron a x₀ (k + 1 + 1) - √a
         ≤ (heron a x₀ (k + 1) - √a) / 2 := hstep
       _ ≤ ((1 / 2) ^ k * (heron a x₀ 1 - √a)) / 2 := by linarith
