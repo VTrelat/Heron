@@ -55,7 +55,7 @@ lemma step_pos {a x : ℝ} (ha : 0 < a) (hx : 0 < x) : 0 < step a x := by
 lemma heron_pos {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) : ∀ n, 0 < heron a x₀ n := by
   intro n
   induction n with
-  | zero => rwa [heron]
+  | zero => exact hx₀
   | succ k ih => exact step_pos ha ih
 
 /-- **AM–GM**: a Heron step never underestimates `√a` (squared form: `a ≤ (step)²`). -/
@@ -63,13 +63,14 @@ lemma le_sq_step {a x : ℝ} (hx : x ≠ 0) : a ≤ (step a x) ^ 2 := by
   have key : (step a x) ^ 2 - a = ((x ^ 2 - a) / (2 * x)) ^ 2 := by
     rw [step_eq hx]
     grind
-  nlinarith [sq_nonneg ((x ^ 2 - a) / (2 * x)), key]
+  rw [← sub_nonneg, key]
+  apply sq_nonneg
 
 /-- Consequence: `√a ≤ step a x` whenever `x > 0`. -/
 lemma sqrt_le_step {a x : ℝ} (ha : 0 < a) (hx : 0 < x) : √a ≤ step a x := by
-  have hstep : 0 ≤ step a x := (step_pos ha hx).le
-  calc √a ≤ √((step a x) ^ 2) := Real.sqrt_le_sqrt (le_sq_step (ne_of_gt hx))
-    _ = step a x := Real.sqrt_sq hstep
+  trans √((step a x) ^ 2)
+  · exact Real.sqrt_le_sqrt (le_sq_step hx.ne')
+  · rw [Real.sqrt_sq (step_pos ha hx).le]
 
 /-- From index 1 on, every iterate is at least `√a`. -/
 lemma sqrt_le_heron {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
@@ -80,20 +81,18 @@ lemma sqrt_le_heron {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
 /-- Exact **error identity**: `step a x − √a = (x − √a)² / (2x)`. -/
 lemma step_sub_sqrt {a x : ℝ} (ha : 0 < a) (hx : 0 < x) :
     step a x - √a = (x - √a) ^ 2 / (2 * x) := by
-  have hx' : x ≠ 0 := ne_of_gt hx
   have hs : √a ^ 2 = a := Real.sq_sqrt ha.le
-  rw [step_eq hx']
+  rw [step_eq hx.ne']
   grind
 
 /-- **Contraction**: if `√a ≤ x`, the error is at least halved. -/
 lemma step_sub_sqrt_le {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : √a ≤ x) :
     step a x - √a ≤ (x - √a) / 2 := by
-  have hd : 0 ≤ x - √a := by linarith
-  have hnn : 0 ≤ √a * (x - √a) / (2 * x) := by
-    apply div_nonneg (mul_nonneg (Real.sqrt_nonneg a) hd); positivity
+  have hnn : 0 ≤ √a * (x - √a) / (2 * x) := by positivity
   have expand : (x - √a) / 2 - (step a x - √a)
       = √a * (x - √a) / (2 * x) := by
-    rw [step_sub_sqrt ha hx]; field_simp; ring
+    rw [step_sub_sqrt ha hx]
+    grind
   linarith [expand, hnn]
 
 /-- **Theorem (geometric rate).** For every `k`, the error at index `k+1` is at most
@@ -104,14 +103,10 @@ theorem heron_error_le {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
   induction k with
   | zero => simp
   | succ k ih =>
-    have h1 : √a ≤ heron a x₀ (k + 1) := sqrt_le_heron ha hx₀ k
-    have hpos : 0 < heron a x₀ (k + 1) := heron_pos ha hx₀ (k + 1)
-    have hstep : heron a x₀ (k + 1 + 1) - √a
-        ≤ (heron a x₀ (k + 1) - √a) / 2 :=
-          step_sub_sqrt_le ha hpos h1
     calc heron a x₀ (k + 1 + 1) - √a
-        ≤ (heron a x₀ (k + 1) - √a) / 2 := hstep
-      _ ≤ ((1 / 2) ^ k * (heron a x₀ 1 - √a)) / 2 := by linarith
+        ≤ (heron a x₀ (k + 1) - √a) / 2 :=
+          step_sub_sqrt_le ha (heron_pos ha hx₀ (k + 1)) (sqrt_le_heron ha hx₀ k)
+      _ ≤ ((1 / 2) ^ k * (heron a x₀ 1 - √a)) / 2 := by gcongr
       _ = (1 / 2) ^ (k + 1) * (heron a x₀ 1 - √a) := by ring
 
 /-! ### Bonus 1 — Quadratic convergence
@@ -165,7 +160,9 @@ def sqrtApprox (a x₀ ε : ℚ) : ℕ → ℚ
 after one step, the iterate overestimates `√a`, i.e. `x² ≥ a`. -/
 lemma le_sq_step_rat {a x : ℚ} (hx : x ≠ 0) : a ≤ (step a x) ^ 2 := by
   have key : (step a x) ^ 2 - a = ((x ^ 2 - a) / (2 * x)) ^ 2 := by
-    unfold step; field_simp; ring
-  nlinarith [sq_nonneg ((x ^ 2 - a) / (2 * x)), key]
+    unfold step
+    grind
+  rw [← sub_nonneg, key]
+  exact sq_nonneg _
 
 end Heron

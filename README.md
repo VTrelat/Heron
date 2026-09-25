@@ -39,10 +39,9 @@ Core total ≈ 2 h; the bonuses keep early finishers busy (nobody is left idle).
 
 ## Hints
 Hints are deliberately sparse in the file. Nudges if you're stuck:
-- **Ex 4** (the pivot): show that `(step a x)² − a = ((x²−a)/(2x))²`, then `nlinarith [sq_nonneg …]`.
+- **Ex 4** (the pivot): show that `(step a x)² − a = ((x²−a)/(2x))²`, then `rw [← sub_nonneg]` and `sq_nonneg`.
 - **Ex 5**: `Real.sqrt_le_sqrt` then `Real.sqrt_sq` (rewrite `√((step)²) = step`).
-- **Ex 7**: `field_simp` then **`linear_combination`** with `Real.sq_sqrt` (a good moment to introduce
-  this tactic: everything comes from `(√a)² = a`).
+- **Ex 7**: put `(√a)² = a` (`Real.sq_sqrt`) in the context, rewrite with `step_eq`, then `grind`.
 - **Ex 8**: form the difference `(x−√a)/2 − (step−√a)` and show it equals `√a·(x−√a)/(2x) ≥ 0`.
 - **Ex 9**: induction, then `calc` chaining the contraction (ex 8) and the induction hypothesis.
 
