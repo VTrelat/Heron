@@ -126,19 +126,16 @@ lemma step_sub_sqrt_le_sq {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : √a ≤ 
 We deduce convergence to `√a` in the `Tendsto` sense. -/
 theorem heron_tendsto {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
     Tendsto (heron a x₀) atTop (𝓝 √a) := by
-  set C := heron a x₀ 1 - √a with hC
-  -- the shifted sequence `n ↦ heron a x₀ (n+1)` tends to `√a`
-  have hg : Tendsto (fun n : ℕ => (1 / 2 : ℝ) ^ n * C) atTop (𝓝 0) := by
-    have h2 : Tendsto (fun n : ℕ => (1 / 2 : ℝ) ^ n) atTop (𝓝 0) :=
-      tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
-    simpa using h2.mul_const C
-  have he0 : Tendsto (fun n => heron a x₀ (n + 1) - √a) atTop (𝓝 0) := by
-    refine squeeze_zero (fun n => ?_) (fun n => heron_error_le ha hx₀ n) hg
-    have := sqrt_le_heron ha hx₀ n; linarith
-  have hshift : Tendsto (fun n => heron a x₀ (n + 1)) atTop (𝓝 (√a)) := by
-    have := he0.add_const (√a)
-    simpa using this
-  exact (tendsto_add_atTop_iff_nat 1).mp hshift
+  let C := heron a x₀ 1 - √a
+  suffices hg : Tendsto (fun n : ℕ ↦ (1 / 2 : ℝ) ^ n * C) atTop (𝓝 0) by
+    rw [← tendsto_add_atTop_iff_nat (k := 1), ← tendsto_sub_nhds_zero_iff]
+    apply squeeze_zero (fun n ↦ ?_) (fun n ↦ ?_) hg
+    · apply sub_nonneg_of_le
+      exact sqrt_le_heron ha hx₀ n
+    · exact heron_error_le ha hx₀ n
+  rw [← zero_mul (a := C)]
+  apply Filter.Tendsto.mul_const
+  apply tendsto_pow_atTop_nhds_zero_of_lt_one <;> norm_num1
 
 /-! ## Part B — An executable program
 

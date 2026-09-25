@@ -144,7 +144,7 @@ lemma step_sub_sqrt_le_sq {a x : ℝ} (ha : 0 < a) (hx : 0 < x) (hge : √a ≤ 
 
 /-- **Bonus 2 — the limit.** The sequence converges to `√a` in the `Tendsto` sense.
 Idea: bound the error `0 ≤ xₙ₊₁ − √a ≤ (1/2)^n · C` and send it to 0
-(`squeeze_zero`, `tendsto_pow_atTop_𝓝_zero_of_lt_one`), then shift the index
+(`squeeze_zero`, `tendsto_pow_atTop_nhds_zero_of_lt_one`), then shift the index
 (`tendsto_add_atTop_iff_nat`). -/
 theorem heron_tendsto {a x₀ : ℝ} (ha : 0 < a) (hx₀ : 0 < x₀) :
     Tendsto (heron a x₀) atTop (𝓝 √a) := by
