@@ -4,21 +4,6 @@ set_option linter.style.header false
 
 /-!
 # Heron's method for `√a` — SOLUTIONS
-
-Given `a > 0` and a starting point `x₀ > 0`, we iterate
-
-  `xₙ₊₁ = (xₙ + a / xₙ) / 2`.
-
-We prove that this sequence converges to `√a`, **with an explicit rate**
-(the error is at least halved at each step), and then turn it into an
-**executable program** that computes `√a` to a given precision.
-
-The iteration only uses field operations (never `Real.sqrt`): it is therefore
-*computable* over `ℚ`, whereas the *proof* is carried out over `ℝ`.
-
-Outline:
-* Part A — convergence over `ℝ` (core + two bonuses: quadratic convergence, the limit).
-* Part B — the program: `#eval` over `ℚ`, a `Float` version, and `sqrtApprox`.
 -/
 
 open Filter

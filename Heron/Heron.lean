@@ -18,17 +18,6 @@ This lab has two goals:
 * **Part B — run it**: since the iteration only uses `+ - * /`, it is *computable*.
   We turn it into a small program that computes `√a` to a requested precision (`#eval`).
 
-## Rules of the game
-Replace each `sorry` with a proof. The definitions and the `#eval`s are **given**:
-the program already runs, you prove that it is correct.
-
-## Toolbox (useful tactics)
-`unfold`, `simp`, `rw [...]`, `calc`, `induction n with | zero => … | succ k ih => …`,
-`linarith`, `nlinarith [sq_nonneg …]`, `positivity`, `field_simp`, `ring`, `gcongr`.
-
-Mathlib lemmas about the square root (also search with `exact?`, `apply?`, or mathlib search):
-`Real.sq_sqrt : 0 ≤ a → √a ^ 2 = a`, `Real.sqrt_sq : 0 ≤ a → √(a^2) = a`,
-`Real.sqrt_le_sqrt`, `Real.sqrt_nonneg`, `Real.sqrt_pos`.
 -/
 
 open Filter
@@ -125,8 +114,8 @@ def sqrtApprox (a x₀ ε : ℚ) : ℕ → ℚ
   | 0 => x₀
   | (fuel + 1) => if |x₀ ^ 2 - a| ≤ ε then x₀ else sqrtApprox a (step a x₀) ε fuel
 
-#eval sqrtApprox 2 1 (1 / 1000000) 100        -- rational approx of √2 (x² within 1e-6)
-#eval sqrtApprox 2 1 (1 / 10 ^ 12) 100        -- precision 1e-12
+#eval sqrtApprox 2 1 1e6 100          -- rational approx of √2 (x² within 1e-6)
+#eval sqrtApprox 2 1 1e-12 100        -- precision 1e-12
 
 /-- **Exercise 10 (computable invariant).** Over `ℚ`, after one step the iterate
 overestimates `√a`, i.e. `a ≤ (step a x)²`: the *same proof* as exercise 4, but over `ℚ`. -/
